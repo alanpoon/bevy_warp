@@ -1,0 +1,26 @@
+[tasks.build-wasm]
+command = "cargo"
+args = ["build", "--bin", "boltless-client", "--target", "wasm32-unknown-unknown", "--release"]
+
+[tasks.wasm-bindgen]
+command = "wasm-bindgen"
+args = ["--out-dir", "public/pkg", "--target", "web", "target/wasm32-unknown-unknown/release/boltless-client.wasm"]
+dependencies = ["build-wasm"]
+
+[tasks.webpack]
+command = "npm"
+args = ["run", "build"]
+dependencies = ["wasm-bindgen"]
+
+[tasks.wasm-serve]
+command = "nohup"
+args = ["basic-http-server", "public","-a","127.0.0.1:4001"]
+dependencies = ["webpack"]
+
+[tasks.wasm-serve2]
+command = "nohup"
+args = ["basic-http-server", "public","-a","0.0.0.0:4001"]
+dependencies = ["wasm-bindgen"]
+
+[config]
+default_to_workspace = false

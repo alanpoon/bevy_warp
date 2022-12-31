@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+    <style>
+       
+    </style>
+<body>
+
+<canvas id="game"></canvas>
+<script>
+    window.game_server = function(){
+      return 'ws://localhost:7083/';
+    }
+</script>
+<script type="module">
+    import init from './pkg/boltless-client.js';
+
+    async function run() {
+    
+    await init();
+    }
+
+    run();
+</script>
+</body>
+</html>

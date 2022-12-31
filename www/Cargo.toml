@@ -1,0 +1,27 @@
+[workspace]
+
+resolver = "2"
+
+members = [
+  "crates/components/*",
+  "crates/plugins/*",
+  "crates/apps/*",
+]
+
+default-members = [
+  "crates/components/*",
+  "crates/plugins/*",
+  "crates/apps/*",
+]
+
+[patch.crates-io]
+bevy_ecs = {git="https://github.com/bevyengine/bevy",rev = "b995b4662a9481e8d6fd984b2d2fd02e1c2d1a5d",default-features = false}
+bevy = {git="https://github.com/bevyengine/bevy",rev = "b995b4662a9481e8d6fd984b2d2fd02e1c2d1a5d",default-features = false}
+tokio = {git="https://github.com/alanpoon/tokio", rev = "57bafa4c642df9adb0ca1378ec50d9a78481c656"}
+hyper = {git="https://github.com/alanpoon/hyper", rev = "62e5db0b546346fc02cf3de619eac4332a00e5a4"}
+tokio-tungstenite = {git ="https://github.com/alanpoon/tokio-tungstenite", rev = "a2520a2a5de9023cf55aa9de728425890094bae8"}
+
+# [patch."https://github.com/alanpoon/bevy_wasmcloud_lib"]
+# nats-lite = {path="../../../bevy_wasmcloud_lib/crates/nats-lite"}
+# cross-websocket = {path="../../../bevy_wasmcloud_lib/crates/cross-websocket"}
+# client-websocket = {package="boltless-client-websocket",path="../../../bevy_wasmcloud_lib/crates/client-websocket"}

@@ -1,0 +1,4 @@
+/target
+www/target
+www/nohup.out
+www/public/**/**.wasm

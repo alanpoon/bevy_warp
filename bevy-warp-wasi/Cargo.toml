@@ -1,0 +1,39 @@
+[package]
+name = "bevy-warp-wasi"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+server = ["warp"]
+client = []
+
+[dependencies]
+uuid = { version = "1.2.2", features = ["serde", "v4"] }
+anyhow = "1.0.44"
+thiserror = "1.0"
+futures-util = { version = "0.3", default-features = false, features = ["sink"] }
+bevy = { git="https://github.com/bevyengine/bevy",rev="b995b4662a9481e8d6fd984b2d2fd02e1c2d1a5d", default-features = false }
+lazy_static = "1.4.0"
+futures = "0.3.16"
+async-trait = "0.1.51"
+eyre = "0.6.5"
+pharos = "0.5.2"
+ws_stream_wasm = { version = "0.7.3" }
+#[target.'cfg(target_os = "unknown")'.dependencies]
+cross-websocket = {git = "https://github.com/alanpoon/bevy_wasmcloud_lib"}
+wasm-bindgen-futures = "0.4.33"
+js-sys = "0.3.46"
+wasm-bindgen = "=0.2.83"
+
+[target.'cfg(target_os = "wasi")'.dependencies]
+warp = {path = "../../warp", optional = true}
+tokio-stream = { version = "0.1.1", features = ["net"] }
+
+[dependencies.web-sys]
+version = "0.3.50"
+features = [
+  'Window',
+  'Location',
+]

@@ -1,0 +1,23 @@
+[workspace]
+resolver = "2"
+
+members = [
+  "actors/*",
+  "bevy-warp-wasi"
+]
+
+default-members = [
+  "actors/*"
+]
+[profile.release]
+debug = true
+
+[patch.crates-io]
+tokio = {git="https://github.com/alanpoon/tokio", rev = "57bafa4c642df9adb0ca1378ec50d9a78481c656"}
+hyper = {git="https://github.com/alanpoon/hyper", rev = "62e5db0b546346fc02cf3de619eac4332a00e5a4"}
+tokio-tungstenite = {git ="https://github.com/alanpoon/tokio-tungstenite", rev = "a2520a2a5de9023cf55aa9de728425890094bae8"}
+[patch."https://github.com/bevyengine/bevy"]
+bevy_app = {git ="https://github.com/alanpoon/bevy_wasmcloud_patches"}
+bevy_internal = {git ="https://github.com/alanpoon/bevy_wasmcloud_patches"}
+bevy_render = {git ="https://github.com/alanpoon/bevy_wasmcloud_patches"}
+bevy_time = {git ="https://github.com/alanpoon/bevy_wasmcloud_patches"}

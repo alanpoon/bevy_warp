@@ -1,0 +1,39 @@
+[package]
+name = "boltless-plugin-protocol"
+version = "0.1.0"
+edition = "2018"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+protocol = { package = "boltless-protocol", path = "../../components/protocol", version = "0.1.0" }
+shared = { path = "../../../../shared"}
+bevy = { version = "0.8.1", default-features = false }
+bevy_rapier2d = { git = "https://github.com/alanpoon/bevy_rapier", rev = "777ed4f493d2f15ddf8f025e25ae81c7b33f6f5e" }
+futures = "0.3.16"
+eyre = "0.6.5"
+futures-lite = "1.12.0"
+tracing = "0.1.26"
+lazy_static = "1.4.0"
+log = "0.4"
+serde = { version = "1.0.123", features = ["derive"]}
+serde-wasm-bindgen = "0.4.5"
+serde_json = "1.0.66"
+chrono = {version="0.4", features = ["wasmbind"]}
+rmp-serde = "1.1.0"
+rand = "0.8.5"
+bevy-warp-wasi = {path ="../../../../bevy-warp-wasi",features= ["client"]}
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen-futures = "=0.4.33"
+js-sys = "0.3.46"
+wasm-bindgen = {version= "=0.2.83",features = ["serde-serialize"]}
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+tokio = { version = "1.23.0", features = ["full"] }
+
+[dependencies.web-sys]
+version = "0.3.50"
+features = [
+  'Window',
+  'Location',
+]
