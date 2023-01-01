@@ -7,19 +7,9 @@ command = "wasm-bindgen"
 args = ["--out-dir", "public/pkg", "--target", "web", "target/wasm32-unknown-unknown/release/boltless-client.wasm"]
 dependencies = ["build-wasm"]
 
-[tasks.webpack]
-command = "npm"
-args = ["run", "build"]
-dependencies = ["wasm-bindgen"]
-
 [tasks.wasm-serve]
 command = "nohup"
-args = ["basic-http-server", "public","-a","127.0.0.1:4001"]
-dependencies = ["webpack"]
-
-[tasks.wasm-serve2]
-command = "nohup"
-args = ["basic-http-server", "public","-a","0.0.0.0:4001"]
+args = ["wasmedge", "--dir","public","--env","DIR=public","--env","PORT=3030","./dir_env.wasm"]
 dependencies = ["wasm-bindgen"]
 
 [config]

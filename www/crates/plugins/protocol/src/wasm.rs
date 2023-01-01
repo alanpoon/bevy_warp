@@ -56,10 +56,10 @@ async fn local_connect(c: ClientName, url: String,) -> () {
                     spawn_local(async move {
                         // let c = nats::proto::ClientOp::Connect(s.1.clone());
                         // let c = handle_client_op(c).unwrap();
-                        let c = vec![];
-                        tx.send(c).await.unwrap_or_else(|err| {
-                            info!("err{}", err);
-                        });
+                        // let c = vec![];
+                        // tx.send(c).await.unwrap_or_else(|err| {
+                        //     info!("err{}", err);
+                        // });
 
                         if let Some(m) = meta.next().await {
                             info!("close{:?}", m);
