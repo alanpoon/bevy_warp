@@ -1,5 +1,6 @@
 //#[cfg(target_arch = "wasm32")]
 mod wasm;
+use bevy_warp_wasi::shared::ConnectionHandle;
 //#[cfg(target_arch = "wasm32")]
 use wasm::*;
 
@@ -12,6 +13,7 @@ mod startup;
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 use bevy_warp_wasi::bevy::{set_client,connect_websocket,BoxClient};
+use bevy_warp_wasi::bevy::plugin_client::WarpClientPlugin;
 #[cfg(not(target_arch = "wasm32"))]
 use native::*;
 #[derive(SystemLabel, PartialEq, Eq, Debug, Hash, Clone)]
@@ -41,12 +43,13 @@ extern "C" {
 use shared::*;
 impl Plugin for ProtocolPlugin {
     fn build(&self, app: &mut bevy::app::App) {
+        connect_websocket(String::from("ws://localhost:3031/chat"));
         let app = app
+            .add_plugin(WarpClientPlugin::<ServerMessage>::default())
             .init_resource::<protocol::Commands>()
             .init_resource::<protocol::Events>()
-            .init_resource::<Option<BoxClient>>()
             .init_resource::<LocalUserInfo>()
-            //.add_system(receive_events.label(ProtocolSystem::ReceiveEvents))
+            .add_system(process_network_event.label(ProtocolSystem::ReceiveEvents))
             .add_system(
                 handle_events
                     .label(ProtocolSystem::HandleEvents)
@@ -59,8 +62,9 @@ impl Plugin for ProtocolPlugin {
                     .label(ProtocolSystem::SendCommands)
                     .after(ProtocolSystem::ReceiveEvents),
             );
-        app.add_startup_system(connect_websocket.label(ProtocolSystem::ConnectWebSocket))
-        .add_startup_system(startup::new_ball::new_ball.after(ProtocolSystem::ConnectWebSocket));
+        app
+        //.add_startup_system(connect_websocket.label(ProtocolSystem::ConnectWebSocket))
+        .add_startup_system(startup::new_ball::new_ball);
         #[cfg(target_arch = "wasm32")]
         app.add_system(set_client);
 
@@ -207,89 +211,41 @@ fn send_commands(
         commands.clear();
     }
 }
-// fn receive_events(
-//     mut cmd: Commands,
-//     mut client: ResMut<Option<BoxClient>>,
-//     mut events: ResMut<protocol::Events>,
-//     mut set: ParamSet<(
-//         Query<(Entity, &BallId, &mut Transform, &mut Velocity), With<BallId>>,
-//         // also access the whole world ... why not
-//         //&World,
-//     )>,
-//     mut to_despawn: ResMut<EntityToRemove>,
-//     local_user_info: Res<LocalUserInfo>,
-//     asset_server: Res<AssetServer>,
-// ) {
-//     if let Some(ref mut client) = *client {
-//         let len = client.clients.len();
-//         let _rand_int = get_random_int(0, len as i32);
-//         if let Some(vec) = client.clients.get_mut(0).unwrap().poll_once() {
-//             for event in vec {
-//                 //if let Event::Nats(_client_name,s_op)=handle_server_op(event.clone()).unwrap(){
-//                 let s_op = handle_server_op(event);
-//                 match s_op {
-//                     Ok(t) => {
-//                         match t.clone() {
-//                             nats::proto::ServerOp::Msg {
-//                                 subject,
-//                                 sid: _,
-//                                 reply_to: _,
-//                                 payload,
-//                             } => {
-//                                 if subject.contains("game_logic") {
-//                                     //if subject == String::from("game_logic"){
-//                                     let server_message: ServerMessage =
-//                                         rmp_serde::from_slice(&payload).unwrap();
-//                                     match server_message {
-//                                         ServerMessage::TargetVelocity {
-//                                             ball_id,
-//                                             target_velocity,
-//                                         } => {
-//                                             //for (entity, qball_id,mut tv) in query.iter_mut(){
-//                                             info!("receive {:?} tv {:?}", ball_id, target_velocity);
-//                                             msg_handler::target_velocity::_fn(
-//                                                 &mut cmd,
-//                                                 &mut set,
-//                                                 ball_id,
-//                                                 target_velocity,
-//                                             );
-//                                         }
+fn process_network_event(
+    mut cmd: Commands,
+    mut set: ParamSet<(
+        Query<(Entity, &BallId, &mut Transform, &mut Velocity), With<BallId>>,
+        // also access the whole world ... why not
+        //&World,
+    )>,
+    mut to_despawn: ResMut<EntityToRemove>,
+    local_user_info: Res<LocalUserInfo>,
+    mut network_events: EventReader<(ConnectionHandle,ServerMessage)>
+){
+    for (handle, ev) in network_events.iter() {
+        match ev{
+            ServerMessage::TargetVelocity {
+                ball_id,
+                target_velocity,
+            } => {
+                //for (entity, qball_id,mut tv) in query.iter_mut(){
+                info!("receive {:?} tv {:?}", ball_id, target_velocity);
+                msg_handler::target_velocity::_fn(
+                    &mut cmd,
+                    &mut set,
+                    ball_id.clone(),
+                    target_velocity.clone(),
+                );
+            }
 
-//                                         ServerMessage::GameState {
-//                                             ball_bundles,
-//                                             ..
-//                                         } => {
-                                            
-//                                             msg_handler::game_state::_fn_spawn_or_update_ball_bundles(&mut cmd,&mut set,ball_bundles);
-//                                         }
-//                                         _ => {}
-//                                     }
-
-//                                     continue;
-//                                 } else if subject.contains("welcome") {
-//                                     let server_message: ServerMessage =
-//                                         rmp_serde::from_slice(&payload).unwrap();
-//                                     match server_message {
-//                                         ServerMessage::Welcome { ball_bundle } => {
-//                                             info!("welcome_ ball_bundle {:?}", ball_bundle.clone());
-//                                             cmd.spawn_bundle(ball_bundle.clone());
-//                                             if ball_bundle.ball_id == (*local_user_info).0.ball_id {
-//                                             }
-//                                         }
-//                                         _ => {}
-//                                     }
-//                                 }
-//                             }
-//                             _ => {}
-//                         }
-//                         let event = Event::Nats(String::from("some_client"), t);
-//                         events.push(event);
-//                     }
-//                     Err(e) => {
-//                         info!("protocol e {:?}", e);
-//                     }
-//                 }
-//             }
-//         }
-//     }
-// }
+            ServerMessage::GameState {
+                ball_bundles,
+                ..
+            } => {
+                
+                msg_handler::game_state::_fn_spawn_or_update_ball_bundles(&mut cmd,&mut set,ball_bundles.clone());
+            }
+            _ => {}
+        }
+    }
+}

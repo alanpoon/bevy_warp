@@ -1,8 +1,6 @@
-mod plugin_client;
+pub mod plugin_client;
 pub use plugin_client::*;
 //#[cfg(target_os = "wasi")]
-mod wasi;
-pub use wasi::*;
 mod www;
 pub use www::*;
 use futures::{prelude::*};
@@ -12,6 +10,8 @@ use bevy::prelude::*;
 use std::sync::{Arc,Mutex};
 use std::collections::HashMap;
 use lazy_static::lazy_static;
+
+use crate::shared::ConnectionHandle;
 pub struct BoxClient {
     pub clients: Vec<Box<dyn Client + Send + Sync + 'static>>,
 }
@@ -51,6 +51,7 @@ pub fn set_client(mut client_res: ResMut<Option<BoxClient>>) {
 pub trait Client {
     fn sender(&self) -> Box<dyn Sink<Vec<u8>, Error = String> + Send + Sync + Unpin + 'static>;
     fn poll_once(&mut self) -> Option<Vec<Vec<u8>>>;
+    fn connection_handle(&self) ->ConnectionHandle;
 }
 pub type BoxClient2 = Box<dyn Client + Send + Sync + 'static>;
 

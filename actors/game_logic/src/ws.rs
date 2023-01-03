@@ -8,8 +8,13 @@ use tokio_stream::wrappers::UnboundedReceiverStream;
 static NEXT_USER_ID: AtomicUsize = AtomicUsize::new(1);
 use crate::{user::Users};
 use bevy_warp_wasi::shared::{NetworkEvent,ConnectionHandle};
-use bevy_warp_wasi::bevy::push_network_event;
+use bevy_warp_wasi::bevy::plugin_server::push_network_event;
 use crate::game::APP;
+use lazy_static::lazy_static;
+
+lazy_static!{
+    pub static ref WS_TX: Mutex<HashMap<ConnectionHandle, BoxClient2>> = Mutex::new(HashMap::new());
+}
 pub async fn user_connected(ws: WebSocket, users: Users,addr:Option<SocketAddr>) {
     // Use a counter to assign a new unique ID for this user.
     let my_id = NEXT_USER_ID.fetch_add(1, Ordering::Relaxed);

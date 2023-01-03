@@ -229,6 +229,8 @@ dependencies = [
  "js-sys",
  "lazy_static",
  "pharos",
+ "rmp-serde",
+ "serde",
  "thiserror",
  "tokio-stream",
  "uuid",

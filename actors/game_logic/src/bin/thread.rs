@@ -11,7 +11,7 @@ async fn main() {
     loop{
         tokio::time::sleep(Duration::from_secs(2)).await;
         write.send(Message::Binary(vec![1])).await.unwrap_or(());
-        write.send(Message::Binary(vec![2])).await.unwrap_or(());
+        //write.send(Message::Binary(vec![2])).await.unwrap_or(());
         //write.start_send_unpin());
         c+=1;
         println!("c {:?}",c);

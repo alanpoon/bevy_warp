@@ -17,7 +17,7 @@ use futures::future::join_all;
 use std::sync::{Mutex};
 use std::collections::HashMap;
 lazy_static! {
-    static ref EVENTS: Mutex<HashMap<ClientName, Vec<Vec<u8>>>> = Mutex::new(HashMap::default());
+    pub static ref EVENTS: Mutex<HashMap<ClientName, Vec<Vec<u8>>>> = Mutex::new(HashMap::default());
 }
 #[derive(Clone, Hash, Eq, PartialEq)]
 pub struct ClientName(pub Cow<'static, str>);
@@ -46,6 +46,9 @@ where
         events.truncate(10);
         return Some(result);
     }
+    fn connection_handle(&self)->ConnectionHandle{
+        self.connection_handle.clone()
+    }
 }
 pub async fn connect(
     client_name: ClientName,
@@ -71,10 +74,10 @@ pub async fn connect(
         url:url,
         connection_handle:connection_handle.clone(),
     },evt));
-    // crate::shared::EVENTS
-    //     .lock()
-    //     .unwrap()
-    //     .push(crate::shared::NetworkEvent::Connected(connection_handle.clone()));
+    EVENTS
+    .lock()
+    .unwrap()
+    .insert(client_name.clone(), Vec::new());
     
     wasm_bindgen_futures::spawn_local(async {
         event_receiver.for_each(move |event| {
@@ -96,9 +99,9 @@ pub async fn connect(
     result
 }
 
-pub fn connect_websocket() {
+pub fn connect_websocket(url:String) {
     info!("connect_websocketing");
-    let future_arr = vec![local_connect(ClientName(Cow::Borrowed("default")),String::from("ws://localhost:3031/chat"))];
+    let future_arr = vec![local_connect(ClientName(Cow::Borrowed("default")),url)];
     let join_ = join_all(future_arr).then(|_l| ready(()));
     spawn_local(join_);
     info!("after connect_websocketing");
