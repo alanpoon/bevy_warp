@@ -6,6 +6,7 @@ mod game;
 mod systems;
 mod spawn_;
 mod messaging_;
+mod client_message_handlers;
 use tokio::sync::{mpsc, RwLock};
 use std::net::SocketAddr;
 use warp::Filter;

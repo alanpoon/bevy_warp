@@ -1,9 +1,8 @@
 use shared::*;
-use crate::info_::info_;
 use crate::messaging_::publish_;
 use std::sync::{Arc, Mutex};
 use bevy::prelude::*;
-use bevy_rapier2d::prelude::*;
+use bevy_rapier2d::prelude::Velocity;
 pub fn _fn (map:Arc<Mutex<App>>,_game_id:String,ball_id:BallId,target_velocity:Vec2){
   let  guard = match map.lock() {
     Ok(guard) => guard,

@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use crate::shared::*;
 use std::marker::PhantomData;
-use super::BoxClient;
+use crate::bevy::BoxClient;
 use super::www::EVENTS;
 pub struct WarpClientPlugin<A>(PhantomData<A>);
 

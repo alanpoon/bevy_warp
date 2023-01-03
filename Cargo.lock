@@ -1204,6 +1204,8 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "bevy-warp-wasi",
+ "bevy_rapier2d",
+ "futures",
  "futures-util",
  "lazy_static",
  "rand",

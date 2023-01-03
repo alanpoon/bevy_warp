@@ -7,9 +7,8 @@ use futures::prelude::*;
 use std::borrow::Cow;
 use bevy::log::{error,info};
 use crate::shared::ConnectionHandle;
-
-use super::Client;
-use super::{event_receiver};
+use crate::bevy::Client;
+use crate::bevy::{event_receiver};
 use wasm_bindgen_futures::spawn_local;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
