@@ -8,32 +8,11 @@ use crate::systems;
 lazy_static! {
     pub static ref APP: Arc<Mutex<App>> = Arc::new(Mutex::new(App::new()));
 }
-// pub fn handle_network_events(
-//     mut stream: EventReader<(ConnectionHandle,ClientMessage)>,){
-//     for (_,client_message) in stream.iter(){
-//         match client_message{
-//             Ok(ClientMessage::TargetVelocity{game_id,ball_id,target_velocity})=>{
-//               let map = APP.clone();
-//               client_message_handlers::target_velocity_handler::_fn(map,game_id,ball_id,target_velocity);  
-//             }
-//             Ok(ClientMessage::Welcome{game_id,ball_id,ball_label})=>{
-//               let map = APP.clone();
-//               client_message_handlers::welcome_handler::_fn(map,game_id,ball_id,ball_label);
-//             }
-            
-//             Err(e)=>{
-//               info!("client_message err {:?}",e);
-//             }
-//           }
-//     }
-// }
-
 pub fn init(){
    
     let map = APP.clone();
     let mut m = map.lock().unwrap();
     m.add_plugin(bevy_warp_wasi::bevy::WarpServerPlugin::<ClientMessage>::default())
     .add_system(systems::listen_for_events)
-    //.add_system(handle_network_events)
     ;
 }

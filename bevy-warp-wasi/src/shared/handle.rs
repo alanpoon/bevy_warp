@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default,PartialEq,Eq)]
 pub struct ConnectionHandle {
     pub uuid: Uuid,
 }

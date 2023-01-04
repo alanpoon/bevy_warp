@@ -1,16 +1,21 @@
 use shared::*;
 use crate::messaging_::publish_;
-use crate::spawn_::spawn;
+use crate::spawn_::spawn_;
 use std::collections::HashMap;
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 use std::sync::{Arc, Mutex};
 use rand::Rng;
-pub fn _fn (mut cmd:&mut Commands,mut set:&mut ParamSet<(
-  Query<(&BallId,&BallLabel,&Transform, &Velocity)>,
-  // also access the whole world ... why not
-  //&World,
-  )>,game_id:&String,ball_id:&BallId,ball_label:&BallLabel)-> Result<(),String>{
+use bevy_warp_wasi::bevy::{BoxClient};
+use bevy_warp_wasi::shared::ConnectionHandle;
+use futures_util::SinkExt;
+use tokio::task::spawn;
+pub fn _fn (cmd:&mut Commands,set:&mut ParamSet<(
+  Query<(&BallId,&BallLabel,&Transform, &mut Velocity)>,
+  )>,
+  client:&mut ResMut<Option<BoxClient>>,
+  ch:&ConnectionHandle,
+  game_id:&String,ball_id:&BallId,ball_label:&BallLabel){
     let mut rng = rand::thread_rng();
     let x = rng.gen_range(0..300) as f32;
     let y = rng.gen_range(0..300) as f32;
@@ -24,10 +29,21 @@ pub fn _fn (mut cmd:&mut Commands,mut set:&mut ParamSet<(
       locked_axes:LockedAxes::ROTATION_LOCKED,
       interpolated:TransformInterpolation::default()
     };
-  
-      //info_(format!("welcome {:?}",ball_bundle.clone()));
-      spawn(cmd,ball_bundle.clone());
+      spawn_(cmd,ball_bundle.clone());
       let server_message = ServerMessage::Welcome{ball_bundle};
+      let server_message = rmp_serde::to_vec(&server_message).unwrap();
+      if let Some(ref mut client) = **client {
+        for c in client.clients.iter(){
+          if &c.connection_handle()!=ch{
+            let mut b = c.sender();
+            let server_message_c = server_message.clone();
+            spawn(async move{
+              b.send(server_message_c).await;
+            });
+            
+          }          
+        }
+      }
       // match rmp_serde::to_vec(&server_message){
       //   Ok(b)=>{
       //     publish_(b);
@@ -46,9 +62,17 @@ pub fn _fn (mut cmd:&mut Commands,mut set:&mut ParamSet<(
             interpolated:TransformInterpolation::default()});
         }
       }
-
-      let channel_message_back = ServerMessage::GameState{ball_bundles:ball_bundles};
-      //app.world.send_event();
-    
-    Ok(())
+      if let Some(ref mut client) = **client {
+        let channel_message_back = ServerMessage::GameState{ball_bundles:ball_bundles};
+        for c in client.clients.iter(){
+          if &c.connection_handle()==ch{
+            
+            let data = rmp_serde::to_vec(&channel_message_back.clone()).unwrap();
+            spawn(async move{
+            (*c.sender()).send(data).await;
+            });
+            break;
+          }          
+        }
+      }
 }

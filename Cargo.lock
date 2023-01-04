@@ -1209,6 +1209,7 @@ dependencies = [
  "futures-util",
  "lazy_static",
  "rand",
+ "rmp-serde",
  "shared",
  "tokio",
  "tokio-stream",
