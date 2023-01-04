@@ -1,4 +1,6 @@
+#[cfg(not(target_os = "unknown"))]
 pub mod plugin_server;
+#[cfg(not(target_os = "unknown"))]
 pub use plugin_server::*;
 pub mod plugin_client;
 pub use plugin_client::*;

@@ -2,12 +2,14 @@ use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 use bevy_warp_wasi::shared::{ConnectionHandle};
 use bevy_warp_wasi::bevy::BoxClient;
+use bevy_warp_wasi::bevy::plugin_server::WebSocketClient;
 use shared::*;
+use std::boxed::Box;
 use crate::client_message_handlers;
 pub fn listen_for_events(mut cmd:Commands, mut evs: EventReader<(ConnectionHandle,ClientMessage)>,
     mut set: ParamSet<(
         Query<(&BallId,&BallLabel,&Transform, &mut Velocity)>,
-    )>,mut box_client:ResMut<Option<BoxClient>>) {
+    )>,mut box_client:ResMut<Vec<WebSocketClient>>) {
     for  (ch,cm) in evs.iter() {
         println!("received DummyEvent from  {:?} {:?}", ch,cm);
         match cm{

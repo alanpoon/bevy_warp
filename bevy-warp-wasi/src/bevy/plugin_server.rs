@@ -1,13 +1,16 @@
 use bevy::prelude::*;
-use crate::bevy::BoxClient;
+//use crate::bevy::BoxClient;
 use crate::shared::*;
 use std::marker::PhantomData;
 use futures_util::Sink;
+use std::boxed::Box;
+use tokio::sync::mpsc::UnboundedSender;
+//use tokio::UnboundedSender;
 pub struct WarpServerPlugin<A>(PhantomData<A>);
 impl<A> Plugin for WarpServerPlugin<A> where A:'static  + Send + Sync + for<'de> serde::Deserialize<'de> {
     fn build(&self, app: &mut App) {
         app.init_resource::<Vec<NetworkEvent>>()
-        .init_resource::<Option<BoxClient>>()
+        .init_resource::<Vec<WebSocketClient>>()
         .add_event::<NetworkEvent>()
         .add_event::<(ConnectionHandle,A)>()
         .add_system(receive_events::<A>)
@@ -50,25 +53,18 @@ pub fn push_network_event(e: NetworkEvent,update_binary:Vec<u8>,app:&mut App){
     }
 }
 use crate::bevy::ClientName;
-pub struct WebSocketClient<Tx> {
-    pub command_sender: Tx,
+#[derive(Component)]
+pub struct WebSocketClient {
+    pub command_sender: UnboundedSender<Vec<u8>>,
     pub connection_handle: ConnectionHandle
 }
-use async_trait::async_trait;
-#[async_trait]
-impl<Tx> crate::bevy::Client for WebSocketClient<Tx>
-where
-    Tx: Sink<Vec<u8>, Error = String> + Clone + Send + Sync + Unpin + 'static,
-{
-    fn sender(&self) -> Box<dyn Sink<Vec<u8>, Error = String> + Send + Sync + Unpin + 'static> {
-        Box::new(self.command_sender.clone())
-    }
 
-    fn poll_once(&mut self) -> Option<Vec<Vec<u8>>> {
-    
-        return Some(vec![]);
+impl  WebSocketClient
+{
+    pub fn sender(&self) -> UnboundedSender<Vec<u8>> {
+        self.command_sender.clone()
     }
-    fn connection_handle(&self)->ConnectionHandle{
+    pub fn connection_handle(&self)->ConnectionHandle{
         self.connection_handle.clone()
     }
 }

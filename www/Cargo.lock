@@ -232,6 +232,7 @@ dependencies = [
  "rmp-serde",
  "serde",
  "thiserror",
+ "tokio",
  "tokio-stream",
  "uuid",
  "wasm-bindgen",

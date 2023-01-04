@@ -28,6 +28,7 @@ js-sys = "0.3.46"
 wasm-bindgen = "=0.2.83"
 rmp-serde = "1.1.1"
 serde = "1.0.152"
+tokio = "1.23.0"
 
 [target.'cfg(target_os = "wasi")'.dependencies]
 warp = {path = "../../warp", optional = true}

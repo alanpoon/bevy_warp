@@ -33,8 +33,8 @@ fn receive_events<A>(
                         Ok(b)=>{
                             sink.send((connection_handle.clone(),b));
                         }
-                        _=>{
-
+                        Err(e)=>{
+                            info!("error {:?}",e);
                         }
                     }
                     

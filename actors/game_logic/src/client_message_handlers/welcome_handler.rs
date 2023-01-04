@@ -6,14 +6,14 @@ use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 use std::sync::{Arc, Mutex};
 use rand::Rng;
-use bevy_warp_wasi::bevy::{BoxClient};
+use bevy_warp_wasi::bevy::plugin_server::{WebSocketClient};
 use bevy_warp_wasi::shared::ConnectionHandle;
 use futures_util::SinkExt;
 use tokio::task::spawn;
 pub fn _fn (cmd:&mut Commands,set:&mut ParamSet<(
   Query<(&BallId,&BallLabel,&Transform, &mut Velocity)>,
   )>,
-  client:&mut ResMut<Option<BoxClient>>,
+  client:&mut ResMut<Vec<WebSocketClient>>,
   ch:&ConnectionHandle,
   game_id:&String,ball_id:&BallId,ball_label:&BallLabel){
     let mut rng = rand::thread_rng();
@@ -32,18 +32,15 @@ pub fn _fn (cmd:&mut Commands,set:&mut ParamSet<(
       spawn_(cmd,ball_bundle.clone());
       let server_message = ServerMessage::Welcome{ball_bundle};
       let server_message = rmp_serde::to_vec(&server_message).unwrap();
-      if let Some(ref mut client) = **client {
-        for c in client.clients.iter(){
+        for c in client.iter(){
           if &c.connection_handle()!=ch{
             let mut b = c.sender();
             let server_message_c = server_message.clone();
-            spawn(async move{
-              b.send(server_message_c).await;
-            });
-            
+            b.send(server_message_c);
+            println!("sending {:?}",server_message);
           }          
         }
-      }
+      
       // match rmp_serde::to_vec(&server_message){
       //   Ok(b)=>{
       //     publish_(b);
@@ -62,17 +59,15 @@ pub fn _fn (cmd:&mut Commands,set:&mut ParamSet<(
             interpolated:TransformInterpolation::default()});
         }
       }
-      if let Some(ref mut client) = **client {
-        let channel_message_back = ServerMessage::GameState{ball_bundles:ball_bundles};
-        for c in client.clients.iter(){
-          if &c.connection_handle()==ch{
-            
-            let data = rmp_serde::to_vec(&channel_message_back.clone()).unwrap();
-            spawn(async move{
-            (*c.sender()).send(data).await;
-            });
-            break;
-          }          
-        }
+
+      let channel_message_back = ServerMessage::GameState{ball_bundles:ball_bundles};
+      for c in client.iter(){
+        if &c.connection_handle()==ch{
+          
+          let data = rmp_serde::to_vec(&channel_message_back.clone()).unwrap();
+          c.sender().send(data);
+          break;
+        }          
       }
+      
 }

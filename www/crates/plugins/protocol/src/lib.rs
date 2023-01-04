@@ -132,8 +132,11 @@ fn handle_events(
     keyboard_input.clear();
 
     if pressed {
+        info!("press");
         for (ball_id_ingame, t, mut v) in balls.iter_mut() {
             let ball_id = (*local_user_info).0.ball_id;
+            info!("local user_info {:?}",ball_id);
+            info!("ball_id_ingame user_info {:?}",ball_id_ingame);
             if ball_id_ingame == &ball_id {
                 let mut send = false;
                 if target_velocity_x != 0.0 {

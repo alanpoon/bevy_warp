@@ -31,9 +31,9 @@ pub async fn user_connected(ws: WebSocket, users: Users,addr:Option<SocketAddr>)
 
     // Use an unbounded channel to handle buffering and flushing of messages
     // to the websocket...
-    let (tx, mut rx) = channel::<Vec<u8>>(32);
-    //let (tx, rx) = mpsc::unbounded_channel();
-    //let mut rx = UnboundedReceiverStream::new(rx);
+    //let (tx, mut rx) = channel::<Vec<u8>>(32);
+    let (tx, rx) = mpsc::unbounded_channel();
+    let mut rx = UnboundedReceiverStream::new(rx);
     tokio::task::spawn(async move {
         while let Some(message) = rx.next().await {
             user_ws_tx
@@ -47,13 +47,11 @@ pub async fn user_connected(ws: WebSocket, users: Users,addr:Option<SocketAddr>)
     {
         let map = APP.clone();
         let mut m = map.lock().unwrap();
-        if let Some(mut client) = m.world.get_resource_mut::<Option<BoxClient>>(){
-            if let Some(ref mut c) = *client {
-                c.clients.push(Box::new(WebSocketClient{
-                    connection_handle:client_handle.clone(),
-                    command_sender:tx.clone().sink_map_err(|err| err.to_string()),
-                }));
-            }
+        if let Some(mut client) = m.world.get_resource_mut::<Vec<WebSocketClient>>(){
+            client.push(WebSocketClient{
+                connection_handle:client_handle.clone(),
+                command_sender:tx.clone(),
+            });
         }
         //push_network_event(NetworkEvent::Connected(client_handle.clone()),vec![1],&mut m);
 
