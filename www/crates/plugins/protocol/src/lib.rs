@@ -13,7 +13,8 @@ mod startup;
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 use bevy_warp_wasi::bevy::{set_client,connect_websocket,BoxClient};
-use bevy_warp_wasi::bevy::plugin_client::WarpClientPlugin;
+use bevy_warp_wasi::bevy::plugin_client::WarpClientPlugin2;
+use bevy_warp_wasi::bevy::ClientName;
 #[cfg(not(target_arch = "wasm32"))]
 use native::*;
 #[derive(SystemLabel, PartialEq, Eq, Debug, Hash, Clone)]
@@ -43,13 +44,15 @@ extern "C" {
 use shared::*;
 impl Plugin for ProtocolPlugin {
     fn build(&self, app: &mut bevy::app::App) {
-        connect_websocket(String::from("ws://localhost:3031/chat"));
+        connect_websocket(String::from("shared::ServerMessage"),String::from("ws://localhost:3031/chat"));
+        connect_websocket(String::from("shared::ClientMessage"),String::from("ws://localhost:3032/chat"));
         let app = app
-            .add_plugin(WarpClientPlugin::<ServerMessage>::default())
+            .add_plugin(WarpClientPlugin2::<ServerMessage,ClientMessage>::default())
             .init_resource::<protocol::Commands>()
             .init_resource::<protocol::Events>()
             .init_resource::<LocalUserInfo>()
-            .add_system(process_network_event.label(ProtocolSystem::ReceiveEvents))
+            .add_system(process_server_event.label(ProtocolSystem::ReceiveEvents))
+            .add_system(process_peer_event)
             .add_system(
                 handle_events
                     .label(ProtocolSystem::HandleEvents)
@@ -190,19 +193,39 @@ fn send_commands(
             let command = command.clone();
             let len = client.clients.len();
             let rand_int = get_random_int(0, len as i32);
-            let mut sender = client.clients.get_mut(rand_int).unwrap().sender();
+            
             match command {
-                Command::WS(b)=>{
+                Command::WS(clientname,b)=>{
                     let b_clone = b.clone();
-                    block_on(async move {
-                        sender
-                            .send(b)
-                            .await
-                            .unwrap_or_else(|err| {
-                                error!("{}", err);
-                            });
-                        ready(b_clone)
-                    });
+                    let mut to_client = None;
+                    for c in client.clients.iter(){
+                        if c.client_name() == ClientName(clientname.clone()){
+                            to_client = Some(c);
+                            break;
+                            // let mut sender = c.sender();
+                            // block_on(async move {
+                            //     sender
+                            //         .send(b_clone.clone())
+                            //         .await
+                            //         .unwrap_or_else(|err| {
+                            //             error!("{}", err);
+                            //         });
+                            //     ready(b_clone)
+                            // });
+                        }
+                   }
+                   if let Some(to_client)=to_client {
+                        let mut sender = to_client.sender();
+                        block_on(async move {
+                            sender
+                                .send(b_clone.clone())
+                                .await
+                                .unwrap_or_else(|err| {
+                                    error!("{}", err);
+                                });
+                            ready(b_clone)
+                        });
+                   }
                 }
                 Command::StoreLocal(user_info) => {
                     let local_user_info = LocalUserInfo(user_info);
@@ -214,7 +237,7 @@ fn send_commands(
         commands.clear();
     }
 }
-fn process_network_event(
+fn process_server_event(
     mut cmd: Commands,
     mut set: ParamSet<(
         Query<(Entity, &BallId, &mut Transform, &mut Velocity), With<BallId>>,
@@ -248,7 +271,38 @@ fn process_network_event(
                 
                 msg_handler::game_state::_fn_spawn_or_update_ball_bundles(&mut cmd,&mut set,ball_bundles.clone());
             }
+            ServerMessage::Welcome{
+                ball_bundle
+            }=>{
+                msg_handler::welcome::_fn(&mut cmd,ball_bundle.clone());
+            }
             _ => {}
+        }
+    }
+}
+fn process_peer_event(
+    mut cmd: Commands,
+    mut set: ParamSet<(
+        Query<(Entity, &BallId, &mut Transform, &mut Velocity), With<BallId>>,
+        // also access the whole world ... why not
+        //&World,
+    )>,
+    mut to_despawn: ResMut<EntityToRemove>,
+    local_user_info: Res<LocalUserInfo>,
+    mut network_events: EventReader<(ConnectionHandle,ClientMessage)>
+){
+    for (handle, ev) in network_events.iter() {
+        info!("peer event {:?}",ev);
+        match ev{
+            ClientMessage::TargetVelocity { game_id, ball_id, target_velocity }=>{
+                msg_handler::target_velocity::_fn(
+                    &mut cmd,
+                    &mut set,
+                    ball_id.clone(),
+                    target_velocity.clone(),
+                );
+            }
+            _=>{}
         }
     }
 }

@@ -50,10 +50,12 @@ pub fn set_client(mut client_res: ResMut<Option<BoxClient>>) {
     }
     if let Some(ref mut _c) = *client_res {}
 }
+
 pub trait Client {
     fn sender(&self) -> Box<dyn Sink<Vec<u8>, Error = String> + Send + Sync + Unpin + 'static>;
     fn poll_once(&mut self) -> Option<Vec<Vec<u8>>>;
     fn connection_handle(&self) ->ConnectionHandle;
+    fn client_name(&self) ->ClientName;
 }
 pub type BoxClient2 = Box<dyn Client + Send + Sync + 'static>;
 

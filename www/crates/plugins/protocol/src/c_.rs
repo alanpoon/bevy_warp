@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 use protocol::Command;
 use shared::*;
+use bevy_warp_wasi::bevy::ClientName;
 pub fn target_velocity(
     ball_id: BallId,
     target_velocity_x: f32,
@@ -28,7 +29,7 @@ pub fn target_velocity(
     let n2 = tv_;
     info!("vel,{:?} t_v {:?}",vel,t_v.clone());
     update::target_velocity::velocity(vel, t_v.clone());
-    vec![Command::WS(n1)]
+    vec![Command::WS(String::from("shared::ClientMessage"),n1)]
     // vec![
     //     Command::Nats(String::from("default"), n1),
     //     Command::Nats(String::from("default"), n2),

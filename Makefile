@@ -11,3 +11,8 @@ thread:
 	wasmedge ./target/wasm32-wasi/debug/thread.wasm
 www:
 	(cd www && cargo make wasm-serve)
+peer:
+	cargo build --target wasm32-wasi
+	wasm-snip ./target/wasm32-wasi/debug/peer.wasm -o ./target/wasm32-wasi/debug/peer1.wasm -p wbg
+	wasm-snip ./target/wasm32-wasi/debug/peer1.wasm -o ./target/wasm32-wasi/debug/peer.wasm -p bindgen
+	wasmedge ./target/wasm32-wasi/debug/peer.wasm

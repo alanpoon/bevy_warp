@@ -9,11 +9,7 @@ async fn main() {
     let (mut write, _read) = ws_stream.split();
     let mut c=0;
     loop{
-        tokio::time::sleep(Duration::from_secs(2)).await;
+        tokio::time::sleep(Duration::from_millis(30)).await;
         write.send(Message::Binary(vec![1])).await.unwrap_or(());
-        //write.send(Message::Binary(vec![2])).await.unwrap_or(());
-        //write.start_send_unpin());
-        c+=1;
-        println!("c {:?}",c);
     }
 }

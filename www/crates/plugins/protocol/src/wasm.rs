@@ -29,72 +29,8 @@ extern "C" {
 lazy_static! {
     static ref CLIENTS: Mutex<HashMap<ClientName, BoxClient2>> = Mutex::new(HashMap::new());
     static ref CLIENTS_TO_CONNECT: Mutex<HashMap<ClientName,String>> =
-    Mutex::new([(ClientName(Cow::Borrowed("default")),game_server()
+    Mutex::new([(ClientName(game_server()),game_server()
   )].iter().cloned().collect());
-}
-
-pub fn connect_websocket() {
-    //let servers=vec![String::from("wss://localhost:9222/")];
-    info!("connect_websocketing");
-    let servers = CLIENTS_TO_CONNECT.lock().unwrap();
-    let future_arr = servers
-        .iter()
-        .map(|(c, s)| local_connect(c.clone(), s.clone()));
-    let join_ = join_all(future_arr).then(|_l| ready(()));
-    spawn_local(join_);
-    info!("after connect_websocketing");
-}
-async fn local_connect(c: ClientName, url: String,) -> () {
-    connect(c.clone(),url.clone())
-        .then(|cz| {
-            //let s_clone = s.clone();
-            ready(
-                cz.map(|(client, mut meta)| {
-                    let c_clone = c.clone();
-                    let mut tx = client.sender();
-
-                    spawn_local(async move {
-                        // let c = nats::proto::ClientOp::Connect(s.1.clone());
-                        // let c = handle_client_op(c).unwrap();
-                        // let c = vec![];
-                        // tx.send(c).await.unwrap_or_else(|err| {
-                        //     info!("err{}", err);
-                        // });
-
-                        if let Some(m) = meta.next().await {
-                            info!("close{:?}", m);
-                            delay(1000).await;
-                            local_connect(c_clone, url.clone()).await;
-                        }
-                    });
-                    CLIENTS
-                        .lock()
-                        .unwrap()
-                        .insert(c, std::boxed::Box::new(client));
-                })
-                .unwrap_or_else(|err| {
-                    // spawn_local( async move{
-                    //   delay(3000).await;
-                    //   local_connect(c_clone,s_clone).await;
-                    // });
-                    error!("{}", err)
-                }),
-            )
-        })
-        .await
-}
-pub fn set_client(mut client_res: ResMut<Option<BoxClient>>) {
-    let mut map = CLIENTS.lock().unwrap();
-    for (_k, v) in map.drain() {
-        if let Some(ref mut c) = *client_res {
-            c.clients.push(v);
-        } else {
-            let mut bc = BoxClient::default();
-            bc.clients = vec![v];
-            *client_res = Some(bc);
-        }
-    }
-    if let Some(ref mut _c) = *client_res {}
 }
 
 pub fn block_on<T>(future: impl Future<Output = T> + 'static) {

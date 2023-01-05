@@ -33,22 +33,13 @@ pub fn _fn (cmd:&mut Commands,set:&mut ParamSet<(
       let server_message = ServerMessage::Welcome{ball_bundle};
       let server_message = rmp_serde::to_vec(&server_message).unwrap();
         for c in client.iter(){
-          if &c.connection_handle()!=ch{
             let mut b = c.sender();
             let server_message_c = server_message.clone();
             b.send(server_message_c);
-            println!("sending {:?}",server_message);
-          }          
+
         }
-      
-      // match rmp_serde::to_vec(&server_message){
-      //   Ok(b)=>{
-      //     publish_(b);
-      //   }
-      //   _=>{}
-      // }
+    
       let mut ball_bundles =vec![];
-      //let mut query = app.world.query::<(&BallId,&BallLabel,&Transform, &Velocity)>();
       let mut query = set.p0();
       for (gball_id,ball_label,transform,velocity) in query.iter(){
         if gball_id.0!=ball_id.0{//don't send yourself

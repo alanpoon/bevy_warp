@@ -96,7 +96,11 @@ pub async fn user_disconnected(my_id: usize, users: &Users,connection_handle:Con
     {
         let map = APP.clone();
         let mut m = map.lock().unwrap();
-        push_network_event(NetworkEvent::Disconnected(connection_handle),vec![1],&mut m);
+        if let Some(mut client) = m.world.get_resource_mut::<Vec<WebSocketClient>>(){
+            let index = client.iter().position(|x| x.connection_handle() == connection_handle.clone()).unwrap();
+            client.remove(index);
+        }
+        //push_network_event(NetworkEvent::Disconnected(connection_handle),vec![1],&mut m);
 
     }
     // Stream closed up, so remove from the user list

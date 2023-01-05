@@ -4,7 +4,7 @@ use shared::{UserInfo, ClientMessage};
 #[derive(Serialize, Deserialize, Debug, Clone)]
 //#[serde(tag = "c")] // stands for code
 pub enum Command {
-    WS(Vec<u8>),
+    WS(String,Vec<u8>),//client_name
     StoreLocal(UserInfo),
     #[serde(other)]
     Unknown,

@@ -34,9 +34,11 @@ async fn main() {
     let (ws_stream, _) = connect_async(url).await.expect("Failed to connect");
     let (mut write, _read) = ws_stream.split();
     let (tx, mut rx) = mpsc::unbounded_channel::<warp::ws::Message>();
+    {
     let mut t = TX.clone();
     let mut tt = t.lock().unwrap();
     *tt = Some(tx);
+    }
     tokio::task::spawn(async move {
         while let Some(message) = rx.recv().await {
             let msg = message.into_bytes();
@@ -89,6 +91,7 @@ pub async fn user_connected(ws: WebSocket, users: Users,addr:Option<SocketAddr>)
                 .await;
         }
     });
+    users.write().await.insert(my_id, tx);
     while let Some(result) = user_ws_rx.next().await {
         let msg = match result {
             Ok(msg) => msg,
@@ -102,7 +105,7 @@ pub async fn user_connected(ws: WebSocket, users: Users,addr:Option<SocketAddr>)
 
     // user_ws_rx stream will keep processing as long as the user stays
     // connected. Once they disconnect, then...
-    //user_disconnected(my_id, &users,client_handle).await;
+    user_disconnected(my_id, &users,client_handle).await;
 }
 async fn user_message(my_id: usize, msg: warp::ws::Message, users: &Users,client_handle:ConnectionHandle) {
     // Skip any non-Text messages...
@@ -111,6 +114,7 @@ async fn user_message(my_id: usize, msg: warp::ws::Message, users: &Users,client
     // New message from this user, send it to everyone else (except same uid)...
     for (&uid, tx) in users.read().await.iter() {
         if my_id != uid {
+            println!("uid {:?} my_id {:?}",uid, my_id);
             if let Err(_disconnected) = tx.send(msg.clone()) {
                 // The tx is disconnected, our `user_disconnected` code
                 // should be happening in another task, nothing more to
@@ -118,4 +122,12 @@ async fn user_message(my_id: usize, msg: warp::ws::Message, users: &Users,client
             }
         }
     }
+    let mut t = TX.clone();
+    let mut tt = t.lock().unwrap();
+    if let Some(ref mut tt) = *tt{
+        tt.send(msg.clone());
+    }
+}
+pub async fn user_disconnected(my_id: usize, users: &Users,connection_handle:ConnectionHandle) {
+    users.write().await.remove(&my_id);
 }
